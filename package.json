@@ -1,0 +1,31 @@
+{
+  "name": "nubank-pix-api",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "setup": "node scripts/setup.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Túlio Cadilhac - XDuke",
+  "license": "MIT",
+  "description": "API de pagamentos via Pix usando Node.js, Express e SQLite, para quem não possui conta PJ com acesso à API Pix oficial",
+  "dependencies": {
+    "@klawdyo/pix.js": "^0.9.0-a",
+    "axios": "^1.9.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "googleapis": "^148.0.0",
+    "jimp": "^0.16.1",
+    "node-cron": "^4.0.5",
+    "nodemailer": "^7.0.3",
+    "qrcode": "^1.5.4",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
