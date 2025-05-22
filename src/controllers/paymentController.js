@@ -23,8 +23,9 @@ const createPixPayment = async (req, res) => {
     }
 
     const now = new Date();
-    const offsetMs = -3 * 60 * 60 * 1000; 
-    const expiresAt = new Date(now.getTime() + config.pix.qrCodeExpiration * 1000 + offsetMs);
+    const offsetMs = -3 * 60 * 60 * 1000;
+    const nowBrasilia = new Date(now.getTime() + offsetMs);
+    const expiresAt = new Date(nowBrasilia.getTime() + 20 * 60 * 1000);
     
     const pixData = await pixService.generatePixPayment(user_id, numAmount, expiresAt);
     
@@ -35,7 +36,9 @@ const createPixPayment = async (req, res) => {
       status: 'pending',
       pix_code: pixData.pixCode,
       qr_code_path: qrCodeFilename, 
-      expires_at: expiresAt
+      expires_at: expiresAt,
+      createdAt: nowBrasilia,
+      updatedAt: nowBrasilia
     });
 
     const qrCodeUrl = `${req.protocol}://${req.get('host')}/qrcodes/${path.basename(pixData.qrCodePath)}`;

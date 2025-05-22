@@ -30,7 +30,7 @@ const sendPaymentWebhook = async (payment) => {
     const response = await axios.post(webhookUrl, payload, {
       headers: {
         'Content-Type': 'application/json',
-        'X-Webhook-Signature': signature
+        'x-webhook-secret': signature
       },
       timeout: 10000 
     });

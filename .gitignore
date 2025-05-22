@@ -1,5 +1,6 @@
-# Dependency directories
+# Dependency directories and Archives
 node_modules/
+package-lock.json
 
 # Environment variables
 .env
@@ -34,3 +35,5 @@ Thumbs.db
 config/config.json
 /config/config.json
 ./config/config.json
+
+

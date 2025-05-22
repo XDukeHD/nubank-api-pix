@@ -3,10 +3,10 @@ const { Payment } = require('../models');
 const config = require('../../config/config.json');
 const webhookService = require('./webhookService');
 const { Op } = require('sequelize');
+const cron = require('node-cron');
 
 let emailCheckInterval;
 let oldEmailCleanupInterval;
-
 
 const startEmailCheck = () => {
   emailCheckInterval = setInterval(checkEmailsForPayments, 20000); 
@@ -16,6 +16,29 @@ const startEmailCheck = () => {
   
   oldEmailCleanupInterval = setInterval(cleanupOldEmails, 24 * 60 * 60 * 1000);
   console.log('Email cleanup service started. Cleaning every 24 hours.');
+
+  cron.schedule('*/1 * * * *', async () => { 
+    try {
+      const nowUtc = new Date();
+      const nowBrasilia = new Date(nowUtc.getTime() - (3 * 60 * 60 * 1000));
+
+      const [affectedRows] = await Payment.update(
+        { status: 'expired', updatedAt: nowBrasilia },
+        {
+          where: {
+            status: 'pending',
+            expires_at: { [Op.lt]: nowBrasilia } 
+          }
+        }
+      );
+      if (affectedRows > 0) {
+        console.log(`${affectedRows} pending payments marked as expired at ${nowBrasilia.toISOString()}.`);
+      }
+    } catch (error) {
+      console.error('Error marking payments as expired:', error);
+    }
+  });
+  console.log('Scheduled task to mark expired payments every minute.');
 };
 
 const stopEmailCheck = () => {
@@ -29,7 +52,6 @@ const stopEmailCheck = () => {
     oldEmailCleanupInterval = null;
   }
 };
-
 
 const checkEmailsForPayments = async () => {
   try {
@@ -63,7 +85,6 @@ const checkEmailsForPayments = async () => {
     console.error('Error checking emails:', error);
   }
 };
-
 
 const processPaymentEmail = async (gmail, messageId) => {
   try {
@@ -125,26 +146,15 @@ const processPaymentEmail = async (gmail, messageId) => {
         removeLabelIds: ['UNREAD']
       }
     });
-    
-    let paymentDate = paymentInfo.transferTime;
-    if (paymentDate instanceof Date) {
-      paymentDate = new Date(paymentDate.getTime() - 3 * 60 * 60 * 1000);
-    }
+
+    const now = new Date();
+    const offsetMs = -3 * 60 * 60 * 1000;
+    const nowBrasilia = new Date(now.getTime() + offsetMs);
     await matchedPayment.update({
       status: 'paid',
-      payment_date: paymentDate
+      payment_date: nowBrasilia,
+      updatedAt: nowBrasilia
     });
-
-    try {
-      const qrPath = require('path').join(__dirname, '../../public/qrcodes', matchedPayment.qr_code_path);
-      const fs = require('fs');
-      if (fs.existsSync(qrPath)) {
-        fs.unlinkSync(qrPath);
-        console.log(`QR code apagado: ${qrPath}`);
-      }
-    } catch (e) {
-      console.error('Erro ao apagar QR code:', e);
-    }
     
     console.log(`Payment ${matchedPayment.id} marked as paid`);
     
@@ -156,7 +166,6 @@ const processPaymentEmail = async (gmail, messageId) => {
     console.error('Error processing payment email:', error);
   }
 };
-
 
 const decodeEmailBody = (email) => {
   try {
@@ -212,7 +221,6 @@ const decodeEmailBody = (email) => {
   }
 };
 
-
 const parsePaymentEmail = (emailContent) => {
   try {
     const moneyPatterns = [
@@ -253,38 +261,40 @@ const parsePaymentEmail = (emailContent) => {
       /(hoje|ontem)(?:\s+às|\s+at|\s+de)?\s+(\d{1,2}):(\d{1,2})/i
     ];
     
-    let transferTime = null;
+    const now = new Date();
+    
+    let day, month, year, hour, minute;
+    let foundDate = false;
     
     for (const pattern of datePatterns) {
       const match = emailContent.match(pattern);
       if (match) {
-        const now = new Date();
+        foundDate = true;
         
         if (pattern.toString().includes('hoje|ontem')) {
-          const dayType = match[1].toLowerCase();
-          const hour = parseInt(match[2]);
-          const minute = parseInt(match[3]);
+          day = now.getDate();
+          month = now.getMonth();
+          year = now.getFullYear();
           
-          transferTime = new Date(now);
-          if (dayType === 'ontem') {
-            transferTime.setDate(transferTime.getDate() - 1);
+          if (match[1].toLowerCase() === 'ontem') {
+            const ontem = new Date(year, month, day - 1);
+            day = ontem.getDate();
+            month = ontem.getMonth();
+            year = ontem.getFullYear();
           }
-          transferTime.setHours(hour, minute, 0, 0);
           
+          hour = parseInt(match[2]);
+          minute = parseInt(match[3]);
         } else if (pattern.toString().includes('[\/\-]')) {
-          const day = parseInt(match[1]);
-          const month = parseInt(match[2]) - 1;
-          const hour = parseInt(match[3]);
-          const minute = parseInt(match[4]);
-          
-          transferTime = new Date(now.getFullYear(), month, day, hour, minute);
-          
+          day = parseInt(match[1]);
+          month = parseInt(match[2]) - 1;
+          year = now.getFullYear();
+          hour = parseInt(match[3]);
+          minute = parseInt(match[4]);
         } else {
-          const day = parseInt(match[1]);
-          let monthText = match[2].toLowerCase();
+          day = parseInt(match[1]);
+          const monthText = match[2].toLowerCase();
           const monthAbbr = monthText.substring(0, 3).toLowerCase();
-          const hour = parseInt(match[3]);
-          const minute = parseInt(match[4]);
           
           const monthMap = {
             'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
@@ -293,36 +303,44 @@ const parsePaymentEmail = (emailContent) => {
             'julho': 6, 'agosto': 7, 'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11
           };
           
-          let month = monthMap[monthText] !== undefined ? monthMap[monthText] : monthMap[monthAbbr];
+          month = monthMap[monthText] !== undefined ? monthMap[monthText] : monthMap[monthAbbr];
           
           if (month === undefined) {
             continue;
           }
           
-          transferTime = new Date(now.getFullYear(), month, day, hour, minute);
+          year = now.getFullYear();
+          hour = parseInt(match[3]);
+          minute = parseInt(match[4]);
         }
         
-        if (transferTime > now && transferTime - now > 24 * 60 * 60 * 1000) {
-          transferTime.setFullYear(transferTime.getFullYear() - 1);
-        }
         break;
       }
     }
     
-    if (!transferTime) {
-      transferTime = new Date();
+    if (!foundDate) {
+      day = now.getDate();
+      month = now.getMonth();
+      year = now.getFullYear();
+      hour = now.getHours();
+      minute = now.getMinutes();
     }
-      
+    
+
+    const isoDateString = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00.000`;
+
+    const transferTime = new Date(isoDateString);
+    
+    const transferTimeBrasilia = new Date(transferTime.getTime() - 3 * 60 * 60 * 1000);
     return {
       amount,
-      transferTime
+      transferTime: transferTimeBrasilia
     };
   } catch (error) {
     console.error('Error parsing payment email:', error);
     return null;
   }
 };
-
 
 const deleteEmail = async (gmail, messageId) => {
   try {

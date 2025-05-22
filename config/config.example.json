@@ -1,0 +1,35 @@
+{
+  "server": {
+    "port": 3000,
+    "environment": "production"
+  },
+  "database": {
+    "path": "./database.sqlite"
+  },  "pix": {
+    "key": "sua_chave_pix",
+    "merchantName": "Seu_Nome",
+    "merchantCity": "Seu_Estado",
+    "qrCodeExpiration": 10800,
+    "webhook": {
+      "url": "http://localhost:5000/payments/webhook",
+      "secret": "sua_chave_do_webhook",
+      "active": true
+    }
+  },
+  "email": {
+    "gmail": {
+      "user": "seu_email_gmail",
+      "clientId": "seu_client_id_do_google(veja a documentação do projeto para criar um client_id)",
+      "clientSecret": "seu_client_secret_do_google(veja a documentação do projeto para criar um client_secret)",
+      "refreshToken": "seu_refresh_token_do_google(veja a documentação do projeto para criar um refresh_token)",
+      "sender": "todomundo@nubank.com.br",
+      "_comentariosobresender_apagueessalinha": "Não mudar o sender sobe hipótese alguma, caso o sender esteja errado o sistema não poderá escutar corretamente o email da Nubank"
+    },
+    "checkInterval": 60000
+  },
+  "apiKey": "sua_chave_de_api",
+  "qrCodeOptions": {
+    "logoPath": "./public/logo.png",
+    "outputPath": "./public/qrcodes/"
+  }
+}
