@@ -87,6 +87,9 @@ A segurança é uma prioridade. A API utiliza autenticação por chave de API e 
 
 Se você encontrar algum problema ou tiver dúvidas sobre a implementação, abra uma [issue](https://github.com/XDukeHD/nubank-api-pix/issues) ou entre em contato diretamente.
 
+## 📋 Documentação
+A Documentação está disponível em dois idiomas: [Português](docs/docs-pt.md) e [Inglês](docs/docs-en.md). Você pode consultar a documentação para obter informações detalhadas sobre como usar a API, incluindo exemplos de código e endpoints disponíveis.
+
 ## ⚖️ Licença
 
 Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
