@@ -84,7 +84,8 @@ This endpoint generates a new PIX code and customized QR Code for payment.
 ```json
 {
   "user_id": "123",
-  "amount": 99.90
+  "amount": 99.90,
+  "img_qr": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfF..." 
 }
 ```
 
@@ -103,8 +104,9 @@ This endpoint generates a new PIX code and customized QR Code for payment.
 
 **Notes:**
 - The `user_id` can be any identifier you use to associate the payment with a user or order
+- The `img_qr` field is optional and can contain a base64 image or URL that will be used as the logo in the QR Code
 - The system applies small variations to the amount to help identify the payment
-- The generated QR Code includes your custom logo
+- The generated QR Code includes your custom logo or the image provided in the `img_qr` parameter
 - The `expires_at` field indicates when the charge expires (default: 3 hours)
 
 ### 2. Check Payment Status

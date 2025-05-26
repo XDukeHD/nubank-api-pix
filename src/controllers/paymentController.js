@@ -5,7 +5,7 @@ const path = require('path');
 
 const createPixPayment = async (req, res) => {
   try {
-    const { user_id, amount } = req.body;
+    const { user_id, amount, img_qr } = req.body;
     
     if (!user_id || !amount) {
       return res.status(400).json({
@@ -27,7 +27,7 @@ const createPixPayment = async (req, res) => {
     const nowBrasilia = new Date(now.getTime() + offsetMs);
     const expiresAt = new Date(nowBrasilia.getTime() + 20 * 60 * 1000);
     
-    const pixData = await pixService.generatePixPayment(user_id, numAmount, expiresAt);
+    const pixData = await pixService.generatePixPayment(user_id, numAmount, expiresAt, img_qr);
     
     const qrCodeFilename = path.basename(pixData.qrCodePath);
     const payment = await Payment.create({

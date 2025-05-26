@@ -45,7 +45,37 @@ const overlayLogoOnQrCode = async (qrCodePath, logoPath, outputPath) => {
   }
 };
 
-const generatePixPayment = async (userId, amount, expiresAt) => {
+const getLogoFromBase64 = async (base64Image) => {
+  try {
+    if (!base64Image) return null;
+    
+    let imageData = base64Image;
+    if (base64Image.includes('base64,')) {
+      imageData = base64Image.split('base64,')[1];
+    }
+    
+    const buffer = Buffer.from(imageData, 'base64');
+    const tempImage = await Jimp.read(buffer);
+    return tempImage;
+  } catch (error) {
+    console.error('Error processing base64 image:', error);
+    return null;
+  }
+};
+
+const getLogoFromUrl = async (imageUrl) => {
+  try {
+    if (!imageUrl) return null;
+    
+    const logo = await Jimp.read(imageUrl);
+    return logo;
+  } catch (error) {
+    console.error(`Error loading image from URL ${imageUrl}:`, error);
+    return null;
+  }
+};
+
+const generatePixPayment = async (userId, amount, expiresAt, imgQr = null) => {
   try {   
     const txid = uuidv4().replace(/-/g, '').substring(0, 25);
     
@@ -82,9 +112,28 @@ const generatePixPayment = async (userId, amount, expiresAt) => {
 
     await QRCode.toFile(tempQrCodePath, pixCode, qrOptions);
     
-    const logoPath = path.join(__dirname, '../../public/logo.png');
+    const defaultLogoPath = path.join(__dirname, '../../public/logo.png');
+    let customLogo = null;
     
-    await overlayLogoOnQrCode(tempQrCodePath, logoPath, qrCodePath);
+    if (imgQr) {
+      if (imgQr.startsWith('http://') || imgQr.startsWith('https://')) {
+        customLogo = await getLogoFromUrl(imgQr);
+      } else {
+        customLogo = await getLogoFromBase64(imgQr);
+      }
+    }
+    
+    if (customLogo) {
+      const tempLogoPath = path.join(__dirname, '../../public/qrcodes', `temp_logo_${Date.now()}.png`);
+      await customLogo.writeAsync(tempLogoPath);
+      await overlayLogoOnQrCode(tempQrCodePath, tempLogoPath, qrCodePath);
+      
+      if (fs.existsSync(tempLogoPath)) {
+        fs.unlinkSync(tempLogoPath);
+      }
+    } else {
+      await overlayLogoOnQrCode(tempQrCodePath, defaultLogoPath, qrCodePath);
+    }
     
     if (fs.existsSync(tempQrCodePath)) {
       fs.unlinkSync(tempQrCodePath);
@@ -102,5 +151,8 @@ const generatePixPayment = async (userId, amount, expiresAt) => {
 };
 
 module.exports = {
-  generatePixPayment
+  generatePixPayment,
+  overlayLogoOnQrCode,
+  getLogoFromBase64,
+  getLogoFromUrl
 };
