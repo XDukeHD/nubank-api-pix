@@ -7,6 +7,7 @@
     <img src="https://img.shields.io/badge/status-beta-orange" alt="Status do Projeto" />
     <img src="https://img.shields.io/badge/licença-MIT-green" alt="Licença" />
     <img src="https://img.shields.io/badge/node-%3E%3D14-blue" alt="Node.js" />
+    <img src="https://wakatime.com/badge/user/f7fc301e-e4ee-4d46-b45f-5ff61c255b35/project/20d09027-f014-4ba2-a246-40c94dcf02f9.svg" alt="Wakatime Time About Project" />
   </p>
 </div>
 
