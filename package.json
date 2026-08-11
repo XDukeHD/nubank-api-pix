@@ -13,7 +13,7 @@
   "description": "API de pagamentos via Pix usando Node.js, Express e SQLite, para quem não possui conta PJ com acesso à API Pix oficial",
   "dependencies": {
     "@klawdyo/pix.js": "^0.9.0-a",
-    "axios": "^1.9.0",
+    "axios": "^1.13.5",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
