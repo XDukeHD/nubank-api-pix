@@ -16,7 +16,7 @@
     "axios": "^1.9.0",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
+    "express": "^5.2.0",
     "googleapis": "^148.0.0",
     "jimp": "^0.16.1",
     "node-cron": "^4.0.5",
